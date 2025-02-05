@@ -21,8 +21,8 @@ try
     var logger = new ConversationLogger();
 
     // Load model configuration from the nested configuration sections.
-    var modelAConfig = configuration.GetSection("Models:ModelA").Get<ChatModelConfig>();
-    var modelBConfig = configuration.GetSection("Models:ModelB").Get<ChatModelConfig>();
+    var modelA = configuration.GetSection("Models:ModelA").Get<ChatModelConfig>();
+    var modelB = configuration.GetSection("Models:ModelB").Get<ChatModelConfig>();
 
     // Load the model endpoint from configuration.
     string modelEndpointStr = configuration["ModelEndpoint"] ?? "https://models.inference.ai.azure.com";
@@ -30,16 +30,16 @@ try
 
     // Create two chat clients using the configured model names.
     IChatClient clientA = new ChatCompletionsClient(modelEndpoint, new AzureKeyCredential(token))
-        .AsChatClient(modelAConfig.Name);
+        .AsChatClient(modelA.Name);
     IChatClient clientB = new ChatCompletionsClient(modelEndpoint, new AzureKeyCredential(token))
-        .AsChatClient(modelBConfig.Name);
+        .AsChatClient(modelB.Name);
 
     // Set up initial prompts.
-    string introA = String.Format(modelBConfig.InitalPrompt, modelAConfig.Name, modelBConfig.Name);
-    string introB = String.Format(modelBConfig.InitalPrompt, modelBConfig.Name, modelAConfig.Name);
+    string introA = String.Format(modelA.InitalPrompt, modelA.Name, modelB.Name);
+    string introB = String.Format(modelB.InitalPrompt, modelB.Name, modelA.Name);
 
     // --- Introduction for Model A ---
-    Console.WriteLine($">>> Sending introduction prompt to {modelAConfig.Name}:");
+    Console.WriteLine($">>> Sending introduction prompt to {modelA.Name}:");
     Console.ForegroundColor = ConsoleColor.Red;
     string responseA = "";
     await foreach (var item in clientA.CompleteStreamingAsync(introA))
@@ -48,10 +48,10 @@ try
         responseA += item;
     }
     Console.ResetColor();
-    logger.LogResponse(modelAConfig.Name, responseA, modelAConfig.Color);
+    logger.LogResponse(modelA.Name, responseA, modelA.Color);
 
     // --- Introduction for Model B ---
-    Console.WriteLine($"\n\n>>> Sending introduction prompt to {modelBConfig.Name}:");
+    Console.WriteLine($"\n\n>>> Sending introduction prompt to {modelB.Name}:");
     Console.ForegroundColor = ConsoleColor.Blue;
     string responseB = "";
     await foreach (var item in clientB.CompleteStreamingAsync(introB))
@@ -60,7 +60,7 @@ try
         responseB += item;
     }
     Console.ResetColor();
-    logger.LogResponse(modelBConfig.Name, responseB, modelBConfig.Color);
+    logger.LogResponse(modelB.Name, responseB, modelB.Color);
 
     Console.WriteLine();
 
@@ -71,7 +71,7 @@ try
         Console.WriteLine($"\n\n===== Conversation Round {round} =====");
 
         // Model A responds to Model B's message.
-        Console.WriteLine($"\n>>> {modelAConfig.Name} responding to {modelBConfig.Name}:");
+        Console.WriteLine($"\n>>> {modelA.Name} responding to {modelB.Name}:");
         Console.ForegroundColor = ConsoleColor.Red;
         string newResponseA = "";
         await foreach (var item in clientA.CompleteStreamingAsync(responseB))
@@ -80,10 +80,10 @@ try
             newResponseA += item;
         }
         Console.ResetColor();
-        logger.LogResponse(modelAConfig.Name, newResponseA, modelAConfig.Color);
+        logger.LogResponse(modelA.Name, newResponseA, modelA.Color);
 
         // Model B responds to Model A's message.
-        Console.WriteLine($"\n\n>>> {modelBConfig.Name} responding to {modelAConfig.Name}:");
+        Console.WriteLine($"\n\n>>> {modelB.Name} responding to {modelA.Name}:");
         Console.ForegroundColor = ConsoleColor.Blue;
         string newResponseB = "";
         await foreach (var item in clientB.CompleteStreamingAsync(newResponseA))
@@ -92,7 +92,7 @@ try
             newResponseB += item;
         }
         Console.ResetColor();
-        logger.LogResponse(modelBConfig.Name, newResponseB, modelBConfig.Color);
+        logger.LogResponse(modelB.Name, newResponseB, modelB.Color);
 
         // Update responses for the next round.
         responseA = newResponseA;
