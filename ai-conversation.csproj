@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Markdig" Version="0.40.0" />
     <PackageReference Include="Microsoft.Extensions.AI.AzureAIInference" Version="9.1.0-preview.1.25064.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.1" />

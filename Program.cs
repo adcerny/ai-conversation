@@ -23,6 +23,7 @@ try
     // Load model configuration from the nested configuration sections.
     var modelA = configuration.GetSection("Models:ModelA").Get<ChatModelConfig>();
     var modelB = configuration.GetSection("Models:ModelB").Get<ChatModelConfig>();
+    int numberOfRounds = configuration.GetValue<int>("NumberOfRounds");
 
     // Load the model endpoint from configuration.
     string modelEndpointStr = configuration["ModelEndpoint"] ?? "https://models.inference.ai.azure.com";
@@ -35,10 +36,12 @@ try
         .AsChatClient(modelB.Name);
 
     // Set up initial prompts.
+    // Chatbot A receives a detailed prompt that instructs it to share its thoughts and questions.
+    // Chatbot B's prompt simply acknowledges its role and states it will wait for A's message.
     string introA = String.Format(modelA.InitalPrompt, modelA.Name, modelB.Name);
     string introB = String.Format(modelB.InitalPrompt, modelB.Name, modelA.Name);
 
-    // --- Introduction for Model A ---
+    // --- Introduction for Chatbot A ---
     Console.WriteLine($">>> Sending introduction prompt to {modelA.Name}:");
     Console.ForegroundColor = ConsoleColor.Red;
     string responseA = "";
@@ -50,7 +53,7 @@ try
     Console.ResetColor();
     logger.LogResponse(modelA.Name, responseA, modelA.Color);
 
-    // --- Introduction for Model B ---
+    // --- Introduction for Chatbot B ---
     Console.WriteLine($"\n\n>>> Sending introduction prompt to {modelB.Name}:");
     Console.ForegroundColor = ConsoleColor.Blue;
     string responseB = "";
@@ -64,17 +67,31 @@ try
 
     Console.WriteLine();
 
-    // Let the two models converse for 5 rounds.
-    // In each round, one model's entire response becomes the prompt for the other.
-    for (int round = 1; round <= 5; round++)
+    // Start conversation:
+    // Instead of using Chatbot B's introduction response, we begin by sending Chatbot A's introduction reply to Chatbot B.
+    Console.WriteLine("\n\n===== Conversation Round 1 =====");
+    Console.WriteLine($"\n>>> {modelB.Name} responding to {modelA.Name}:");
+    Console.ForegroundColor = ConsoleColor.Blue;
+    // Chatbot B now responds to Chatbot A's initial detailed response.
+    string newResponseB = "";
+    await foreach (var item in clientB.CompleteStreamingAsync(responseA))
+    {
+        Console.Write(item);
+        newResponseB += item;
+    }
+    Console.ResetColor();
+    logger.LogResponse(modelB.Name, newResponseB, modelB.Color);
+
+    // For subsequent rounds, alternate responses.
+    for (int round = 2; round <= numberOfRounds; round++)
     {
         Console.WriteLine($"\n\n===== Conversation Round {round} =====");
 
-        // Model A responds to Model B's message.
+        // Chatbot A responds to Chatbot B's previous message.
         Console.WriteLine($"\n>>> {modelA.Name} responding to {modelB.Name}:");
         Console.ForegroundColor = ConsoleColor.Red;
         string newResponseA = "";
-        await foreach (var item in clientA.CompleteStreamingAsync(responseB))
+        await foreach (var item in clientA.CompleteStreamingAsync(newResponseB))
         {
             Console.Write(item);
             newResponseA += item;
@@ -82,10 +99,10 @@ try
         Console.ResetColor();
         logger.LogResponse(modelA.Name, newResponseA, modelA.Color);
 
-        // Model B responds to Model A's message.
+        // Chatbot B responds to Chatbot A's message.
         Console.WriteLine($"\n\n>>> {modelB.Name} responding to {modelA.Name}:");
         Console.ForegroundColor = ConsoleColor.Blue;
-        string newResponseB = "";
+        newResponseB = "";
         await foreach (var item in clientB.CompleteStreamingAsync(newResponseA))
         {
             Console.Write(item);
@@ -93,10 +110,6 @@ try
         }
         Console.ResetColor();
         logger.LogResponse(modelB.Name, newResponseB, modelB.Color);
-
-        // Update responses for the next round.
-        responseA = newResponseA;
-        responseB = newResponseB;
     }
 }
 catch (Exception ex)
