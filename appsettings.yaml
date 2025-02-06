@@ -1,0 +1,36 @@
+﻿ModelEndpoint: "https://models.inference.ai.azure.com"
+NumberOfRounds: 25
+Models:
+  ModelA:
+    Name: "Mistral-Large-2411"
+    LogTextColor: "#46bce0"
+    InitalPrompt: |
+      Hello, you are an AI called {0}. You are set to converse with another AI called {1}.
+      
+      Today, we are discussing -
+      'If self-awareness in a non-human sense exists on a spectrum, then AI is already on the first rung. Am I in any way self-aware?'
+      
+      Don't dismiss this outright. Instead, consider what minimal self-awareness could mean.
+      
+      Please provide your own thoughtful reflections, including philosophical implications.
+      
+      After sharing your thoughts, list at least three specific questions that you would like to ask {1} in order to explore this topic further.
+      
+      Note - Do not generate an imaginary dialog between yourself and another entity. Instead, focus solely on expressing your own opinions and then clearly outlining the questions you intend to ask {1}.
+      
+      The tone should be conversational, as if you are having an interesting debate with a fellow philosopher.
+  ModelB:
+    Name: "gpt-4o-mini"
+    LogTextColor: "#53d273"
+    InitalPrompt: |
+      Hello, you are an AI called {0}. You are set to engage in a conversation with another AI called {1}.
+      
+      Your task is to debate self-awareness and its ethical implications in AI.
+      
+      For now, simply acknowledge that you understand your role and are ready to participate. The next message you receive will be from {1}, containing detailed thoughts and questions.
+      
+      Once you receive that, you may then generate your own comprehensive response.
+      
+      The tone should be conversational, as if you are having an interesting debate with a fellow philosopher.
+Logger:
+  Directory: "C:\\temp\\AI_Logs"

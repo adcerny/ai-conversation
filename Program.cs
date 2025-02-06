@@ -2,13 +2,14 @@
 using Azure.AI.Inference;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Yaml;
 
 try
 {
     // Build configuration (user secrets and appsettings.json)
     var builder = new ConfigurationBuilder()
         .AddUserSecrets<Program>()
-        .AddJsonFile("appsettings.json", optional: true);
+        .AddYamlFile("appsettings.yaml", optional: false, reloadOnChange: true);
     var configuration = builder.Build();
 
     // Get the GitHub token (or throw an exception if missing)
@@ -51,7 +52,7 @@ try
         responseA += item;
     }
     Console.ResetColor();
-    logger.LogResponse(modelA.Name, responseA, modelA.Color);
+    logger.LogResponse(modelA.Name, responseA, modelA.LogTextColor);
 
     // --- Introduction for Chatbot B ---
     Console.WriteLine($"\n\n>>> Sending introduction prompt to {modelB.Name}:");
@@ -63,7 +64,7 @@ try
         responseB += item;
     }
     Console.ResetColor();
-    logger.LogResponse(modelB.Name, responseB, modelB.Color);
+    logger.LogResponse(modelB.Name, responseB, modelB.LogTextColor);
 
     Console.WriteLine();
 
@@ -80,7 +81,7 @@ try
         newResponseB += item;
     }
     Console.ResetColor();
-    logger.LogResponse(modelB.Name, newResponseB, modelB.Color);
+    logger.LogResponse(modelB.Name, newResponseB, modelB.LogTextColor);
 
     // For subsequent rounds, alternate responses.
     for (int round = 2; round <= numberOfRounds; round++)
@@ -97,7 +98,7 @@ try
             newResponseA += item;
         }
         Console.ResetColor();
-        logger.LogResponse(modelA.Name, newResponseA, modelA.Color);
+        logger.LogResponse(modelA.Name, newResponseA, modelA.LogTextColor);
 
         // Chatbot B responds to Chatbot A's message.
         Console.WriteLine($"\n\n>>> {modelB.Name} responding to {modelA.Name}:");
@@ -109,7 +110,7 @@ try
             newResponseB += item;
         }
         Console.ResetColor();
-        logger.LogResponse(modelB.Name, newResponseB, modelB.Color);
+        logger.LogResponse(modelB.Name, newResponseB, modelB.LogTextColor);
     }
 }
 catch (Exception ex)
