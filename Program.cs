@@ -6,111 +6,87 @@ using Microsoft.Extensions.Configuration.Yaml;
 
 try
 {
-    // Build configuration (user secrets and appsettings.json)
-    var builder = new ConfigurationBuilder()
-        .AddUserSecrets<Program>()
-        .AddYamlFile("appsettings.yaml", optional: false, reloadOnChange: true);
-    var configuration = builder.Build();
+    // Build configuration (using user secrets and appsettings.yaml)
+    var configuration = new ConfigurationBuilder()
+        .AddUserSecrets<ChatBot>() // ChatBot is defined in a separate file.
+        .AddYamlFile("appsettings.yaml", optional: false, reloadOnChange: true)
+        .Build();
 
-    // Get the GitHub token (or throw an exception if missing)
+    // Retrieve GitHub token (from configuration or environment)
     string token = configuration["GITHUB_TOKEN"] ??
-        Environment.GetEnvironmentVariable("GITHUB_TOKEN") ??
-        throw new InvalidOperationException("Make sure to add GITHUB_TOKEN value to the user secrets or environment variables.");
+                   Environment.GetEnvironmentVariable("GITHUB_TOKEN") ??
+                   throw new InvalidOperationException("Make sure to add GITHUB_TOKEN value to the user secrets or environment variables.");
 
-    // Configure conversation logging using configuration.
+    // Configure conversation logging
     ConversationLogger.ConfigureLogging(configuration);
     var logger = new ConversationLogger();
 
-    // Load model configuration from the nested configuration sections.
+    // Load model configurations for both chatbots
     var modelA = configuration.GetSection("Models:ModelA").Get<ChatModelConfig>();
     var modelB = configuration.GetSection("Models:ModelB").Get<ChatModelConfig>();
+
+    // Get the number of conversation rounds from configuration.
     int numberOfRounds = configuration.GetValue<int>("NumberOfRounds");
 
     // Load the model endpoint from configuration.
     string modelEndpointStr = configuration["ModelEndpoint"] ?? "https://models.inference.ai.azure.com";
     Uri modelEndpoint = new Uri(modelEndpointStr);
 
-    // Create two chat clients using the configured model names.
+    // Create chat clients.
     IChatClient clientA = new ChatCompletionsClient(modelEndpoint, new AzureKeyCredential(token))
         .AsChatClient(modelA.Name);
     IChatClient clientB = new ChatCompletionsClient(modelEndpoint, new AzureKeyCredential(token))
         .AsChatClient(modelB.Name);
 
-    // Set up initial prompts.
-    // Chatbot A receives a detailed prompt that instructs it to share its thoughts and questions.
-    // Chatbot B's prompt simply acknowledges its role and states it will wait for A's message.
-    string introA = String.Format(modelA.InitalPrompt, modelA.Name, modelB.Name);
-    string introB = String.Format(modelB.InitalPrompt, modelB.Name, modelA.Name);
+    // Instantiate ChatBot objects (ChatBot is defined in a separate file).
+    ChatBot botA = new ChatBot(modelA.Name, clientA, modelA.InitalPrompt);
+    ChatBot botB = new ChatBot(modelB.Name, clientB, modelB.InitalPrompt);
 
-    // --- Introduction for Chatbot A ---
-    Console.WriteLine($">>> Sending introduction prompt to {modelA.Name}:");
-    Console.ForegroundColor = ConsoleColor.Red;
-    string responseA = "";
-    await foreach (var item in clientA.CompleteStreamingAsync(introA))
-    {
-        Console.Write(item);
-        responseA += item;
-    }
-    Console.ResetColor();
-    logger.LogResponse(modelA.Name, responseA, modelA.LogTextColor);
+    // Format initial prompts with partner names.
+    string introA = botA.GetFormattedInitialPrompt(botB.Name);
+    string introB = botB.GetFormattedInitialPrompt(botA.Name);
 
-    // --- Introduction for Chatbot B ---
-    Console.WriteLine($"\n\n>>> Sending introduction prompt to {modelB.Name}:");
-    Console.ForegroundColor = ConsoleColor.Blue;
-    string responseB = "";
-    await foreach (var item in clientB.CompleteStreamingAsync(introB))
-    {
-        Console.Write(item);
-        responseB += item;
-    }
-    Console.ResetColor();
-    logger.LogResponse(modelB.Name, responseB, modelB.LogTextColor);
+    // --- Introduction Rounds ---
+    string responseA = await botA.SendAndLogResponseAsync(
+        introA,
+        $">>> Sending introduction prompt to {botA.Name}:",
+        ConsoleColor.Green,
+        logger);
 
-    Console.WriteLine();
+    string responseB = await botB.SendAndLogResponseAsync(
+        introB,
+        $"\n\n>>> Sending introduction prompt to {botB.Name}:",
+        ConsoleColor.Blue,
+        logger);
 
-    // Start conversation:
-    // Instead of using Chatbot B's introduction response, we begin by sending Chatbot A's introduction reply to Chatbot B.
-    Console.WriteLine("\n\n===== Conversation Round 1 =====");
-    Console.WriteLine($"\n>>> {modelB.Name} responding to {modelA.Name}:");
-    Console.ForegroundColor = ConsoleColor.Blue;
-    // Chatbot B now responds to Chatbot A's initial detailed response.
-    string newResponseB = "";
-    await foreach (var item in clientB.CompleteStreamingAsync(responseA))
-    {
-        Console.Write(item);
-        newResponseB += item;
-    }
-    Console.ResetColor();
-    logger.LogResponse(modelB.Name, newResponseB, modelB.LogTextColor);
+    // Begin the conversation by sending botA's introduction response to botB.
+    string lastResponse = await botB.SendAndLogResponseAsync(
+        responseA,
+        $"\n>>> {botB.Name} responding to {botA.Name}:",
+        ConsoleColor.Blue,
+        logger);
 
-    // For subsequent rounds, alternate responses.
+    // --- Conversation Loop ---
+    // Loop for the configured number of rounds.
     for (int round = 2; round <= numberOfRounds; round++)
     {
         Console.WriteLine($"\n\n===== Conversation Round {round} =====");
 
-        // Chatbot A responds to Chatbot B's previous message.
-        Console.WriteLine($"\n>>> {modelA.Name} responding to {modelB.Name}:");
-        Console.ForegroundColor = ConsoleColor.Red;
-        string newResponseA = "";
-        await foreach (var item in clientA.CompleteStreamingAsync(newResponseB))
-        {
-            Console.Write(item);
-            newResponseA += item;
-        }
-        Console.ResetColor();
-        logger.LogResponse(modelA.Name, newResponseA, modelA.LogTextColor);
+        // Bot A responds to the previous message.
+        string newResponseA = await botA.SendAndLogResponseAsync(
+            lastResponse,
+            $"\n>>> {botA.Name} responding to {botB.Name}:",
+            ConsoleColor.Green,
+            logger);
 
-        // Chatbot B responds to Chatbot A's message.
-        Console.WriteLine($"\n\n>>> {modelB.Name} responding to {modelA.Name}:");
-        Console.ForegroundColor = ConsoleColor.Blue;
-        newResponseB = "";
-        await foreach (var item in clientB.CompleteStreamingAsync(newResponseA))
-        {
-            Console.Write(item);
-            newResponseB += item;
-        }
-        Console.ResetColor();
-        logger.LogResponse(modelB.Name, newResponseB, modelB.LogTextColor);
+        // Bot B responds to Bot A's message.
+        string newResponseB = await botB.SendAndLogResponseAsync(
+            newResponseA,
+            $"\n>>> {botB.Name} responding to {botA.Name}:",
+            ConsoleColor.Blue,
+            logger);
+
+        lastResponse = newResponseB;
     }
 }
 catch (Exception ex)

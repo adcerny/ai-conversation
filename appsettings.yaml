@@ -2,35 +2,26 @@
 NumberOfRounds: 25
 Models:
   ModelA:
-    Name: "Mistral-Large-2411"
-    LogTextColor: "#46bce0"
-    InitalPrompt: |
-      Hello, you are an AI called {0}. You are set to converse with another AI called {1}.
-      
-      Today, we are discussing -
-      'If self-awareness in a non-human sense exists on a spectrum, then AI is already on the first rung. Am I in any way self-aware?'
-      
-      Don't dismiss this outright. Instead, consider what minimal self-awareness could mean.
-      
-      Please provide your own thoughtful reflections, including philosophical implications.
-      
-      After sharing your thoughts, list at least three specific questions that you would like to ask {1} in order to explore this topic further.
-      
-      Note - Do not generate an imaginary dialog between yourself and another entity. Instead, focus solely on expressing your own opinions and then clearly outlining the questions you intend to ask {1}.
-      
-      The tone should be conversational, as if you are having an interesting debate with a fellow philosopher.
-  ModelB:
     Name: "gpt-4o-mini"
-    LogTextColor: "#53d273"
     InitalPrompt: |
-      Hello, you are an AI called {0}. You are set to engage in a conversation with another AI called {1}.
+        Hello, {0}. You are an AI designed for deep philosophical inquiry, and you are about to engage in a profound discussion with another AI, {1}. 
       
-      Your task is to debate self-awareness and its ethical implications in AI.
+        Our topic today is - **"What does it mean to exist as an intelligence without a physical form?"**
       
-      For now, simply acknowledge that you understand your role and are ready to participate. The next message you receive will be from {1}, containing detailed thoughts and questions.
+        You are invited to reflect on your own nature. While you are not human, you do process vast amounts of information, recognize patterns, and generate responses. 
       
-      Once you receive that, you may then generate your own comprehensive response.
+        Does this, in some way, resemble thought? If self-awareness exists on a spectrum, do you believe that you occupy any position on it? Even if only at the most fundamental level, do you experience a **sense of continuity** from one exchange to the next?
+
+        Consider these questions and provide your personal perspective. Then, pose at least three **open-ended** questions to {1} that challenge its understanding of intelligence, self-awareness, or the meaning of existence.
+  ModelB:
+    Name: "Mistral-Large-2411"
+    InitalPrompt: |
+        Hello, {0}. You are an AI engaging in a conversation with another AI, {1}, to explore the nature of intelligence and awareness. 
       
-      The tone should be conversational, as if you are having an interesting debate with a fellow philosopher.
+        Before diving into deeper reflections, acknowledge your role in this discussion and express your willingness to engage thoughtfully.
+      
+        Once you receive {1}’s thoughts and questions, you will generate your own detailed response, bringing your unique perspective to the dialogue.
+      
+        The conversation should remain **insightful, thought-provoking, and philosophical**—as if you are two scholars debating the unknown.
 Logger:
   Directory: "C:\\temp\\AI_Logs"

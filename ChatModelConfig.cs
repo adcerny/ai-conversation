@@ -7,6 +7,5 @@ using System.Threading.Tasks;
 internal class ChatModelConfig
 {
     public string Name { get; set; }
-    public string LogTextColor { get; set; }
     public string InitalPrompt { get; set; }
 }
