@@ -61,8 +61,8 @@ public class ConversationLogger
 
         // Replace placeholders
         template = template.Replace("{subject}", subject)
-                           .Replace("{models}", models)
-                           .Replace("{rounds}", rounds.ToString());
+                   .Replace("{models}", models)
+                   .Replace("{rounds}", rounds.ToString());
 
         Logger.Info(template + "\n");
     }

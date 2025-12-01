@@ -66,20 +66,20 @@ try
     {
         // Get all available subjects from configuration
         var subjectsSection = configuration.GetSection("Subjects");
-        var availableSubjects = subjectsSection.GetChildren()
-            .Select(s => s.Key)
-            .ToList();
+        var subjectChildren = subjectsSection.GetChildren().ToList();
+        var availableSubjects = subjectChildren.Select(s => s.Key).ToList();
+        var availableTitles = subjectChildren.Select(s => s["Title"] ?? s.Key).ToList();
 
         if (availableSubjects.Count == 0)
         {
             throw new InvalidOperationException("No subjects found in configuration.");
         }
 
-        // Display available subjects and let user choose
+        // Display available subjects using their Title
         Console.WriteLine("Available subjects:");
-        for (int i = 0; i < availableSubjects.Count; i++)
+        for (int i = 0; i < availableTitles.Count; i++)
         {
-            Console.WriteLine($"  {i + 1}. {availableSubjects[i]}");
+            Console.WriteLine($"  {i + 1}. {availableTitles[i]}");
         }
 
         Console.Write("\nEnter the number of the subject you want to use: ");
@@ -159,9 +159,11 @@ try
         throw new InvalidOperationException($"Subject '{subjectName}' must define Models:ModelA and Models:ModelB.");
     }
 
-    // Log introduction before conversation starts
+    // Get subject title from configuration
+    string subjectTitle = subjectSection["Title"] ?? subjectName;
+    // Log introduction before conversation starts using the title
     string modelsList = $"{modelA.Name}, {modelB.Name}";
-    logger.LogIntroduction(configuration, subjectName, modelsList, numberOfRounds);
+    logger.LogIntroduction(configuration, subjectTitle, modelsList, numberOfRounds);
 
     // Get available models and let user choose
     var availableModels = GetAvailableModels(configuration);
