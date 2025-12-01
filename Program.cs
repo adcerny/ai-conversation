@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Azure;
 using Azure.AI.Inference;
@@ -6,16 +6,17 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Yaml;
 
-// Helper method to get list of available models from configuration
-static List<string> GetAvailableModels(IConfiguration configuration)
+// Helper method to get list of available models from configuration (fallback)
+static List<ModelMetadata> GetAvailableModels(IConfiguration configuration)
 {
     var models = configuration.GetSection("AvailableModels").Get<List<string>>();
     if (models == null || models.Count == 0)
     {
         // Fallback to a basic list if not configured
-        return new List<string> { "gpt-4o-mini", "gpt-4o", "Phi-4-reasoning" };
+        models = new List<string> { "gpt-4o-mini", "gpt-4o", "Phi-4-reasoning" };
     }
-    return models;
+
+    return models.Select(name => new ModelMetadata { Name = name }).ToList();
 }
 
 static string AppendReminderIfNeeded(string prompt, string reminderPrompt, int round, int reminderInterval)
@@ -34,12 +35,17 @@ static string AppendReminderIfNeeded(string prompt, string reminderPrompt, int r
 }
 
 // Helper method to prompt user to select a model
-static string SelectModel(List<string> availableModels, string botName, string? defaultModel)
+static string SelectModel(List<ModelMetadata> availableModels, string botName, string? defaultModel)
 {
     Console.WriteLine($"\nAvailable models for {botName}:");
     for (int i = 0; i < availableModels.Count; i++)
     {
-        Console.WriteLine($"  {i + 1}. {availableModels[i]}");
+        var metadata = availableModels[i];
+        var description = string.IsNullOrWhiteSpace(metadata.Description)
+            ? string.Empty
+            : $" - {metadata.Description}";
+        var owner = string.IsNullOrWhiteSpace(metadata.Owner) ? string.Empty : $" ({metadata.Owner})";
+        Console.WriteLine($"  {i + 1}. {metadata.Name}{owner}{description}");
     }
 
     Console.Write($"\nEnter the number of the model for {botName}: ");
@@ -52,11 +58,16 @@ static string SelectModel(List<string> availableModels, string botName, string? 
         input = Console.ReadLine();
     }
 
-    return availableModels[int.Parse(input) - 1];
+    return availableModels[int.Parse(input) - 1].Name;
 }
 
 try
 {
+    bool showModelSummary = args.Any(arg => string.Equals(arg, "--model-summary", StringComparison.OrdinalIgnoreCase));
+    var positionalArgs = args
+        .Where(arg => !string.Equals(arg, "--model-summary", StringComparison.OrdinalIgnoreCase))
+        .ToArray();
+
     // Build configuration (using user secrets and appsettings.yaml)
     var configuration = new ConfigurationBuilder()
         .AddUserSecrets<ChatBot>() // ChatBot is defined in a separate file.
@@ -66,10 +77,10 @@ try
     // Choose subject
     string subjectName;
     
-    if (args.Length > 0)
+    if (positionalArgs.Length > 0)
     {
         // Use command line argument if provided
-        subjectName = args[0];
+        subjectName = positionalArgs[0];
     }
     else
     {
@@ -111,7 +122,7 @@ try
     // Choose number of rounds
     int numberOfRounds;
     
-    if (args.Length > 1 && int.TryParse(args[1], out int argRounds))
+    if (positionalArgs.Length > 1 && int.TryParse(positionalArgs[1], out int argRounds))
     {
         // Use command line argument if provided
         numberOfRounds = argRounds;
@@ -180,7 +191,7 @@ try
         .Trim();
 
     int reminderInterval;
-    if (args.Length > 4 && int.TryParse(args[4], out int argReminderInterval) && argReminderInterval > 0 && argReminderInterval <= 500)
+    if (positionalArgs.Length > 4 && int.TryParse(positionalArgs[4], out int argReminderInterval) && argReminderInterval > 0 && argReminderInterval <= 500)
     {
         reminderInterval = argReminderInterval;
         Console.WriteLine($"Using reminder interval from argument: every {reminderInterval} rounds.");
@@ -214,25 +225,76 @@ try
     }
 
     // Get available models and let user choose
-    var availableModels = GetAvailableModels(configuration);
-    
+    var modelCatalogClient = new ModelCatalogClient(token);
+    List<ModelMetadata> availableModels;
+    try
+    {
+        var catalogModels = await modelCatalogClient.GetModelsAsync();
+        availableModels = catalogModels.ToList();
+        if (availableModels.Count == 0)
+        {
+            Console.WriteLine("No models returned from API. Falling back to configuration.");
+            availableModels = GetAvailableModels(configuration);
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Failed to load models from API: {ex.Message}");
+        availableModels = GetAvailableModels(configuration);
+    }
+
+    if (showModelSummary)
+    {
+        Console.WriteLine("\nModel catalog summary:");
+        foreach (var model in availableModels.OrderBy(m => m.Name))
+        {
+            Console.WriteLine($"- {model.Name}");
+            if (!string.IsNullOrWhiteSpace(model.Description))
+            {
+                Console.WriteLine($"  Description: {model.Description}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.Owner))
+            {
+                Console.WriteLine($"  Owner: {model.Owner}");
+            }
+
+            if (model.ContextLength.HasValue)
+            {
+                Console.WriteLine($"  Context length: {model.ContextLength.Value}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.Modalities))
+            {
+                Console.WriteLine($"  Modalities: {model.Modalities}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.Source))
+            {
+                Console.WriteLine($"  Source: {model.Source}");
+            }
+
+            Console.WriteLine();
+        }
+    }
+
     // Prompt user to select models (or use command line args 3 and 4)
     string selectedModelA;
     string selectedModelB;
-    
-    if (args.Length > 2)
+
+    if (positionalArgs.Length > 2)
     {
-        selectedModelA = args[2];
+        selectedModelA = positionalArgs[2];
         Console.WriteLine($"Using ModelA from argument: {selectedModelA}");
     }
     else
     {
         selectedModelA = SelectModel(availableModels, "ModelA", modelA.Name);
     }
-    
-    if (args.Length > 3)
+
+    if (positionalArgs.Length > 3)
     {
-        selectedModelB = args[3];
+        selectedModelB = positionalArgs[3];
         Console.WriteLine($"Using ModelB from argument: {selectedModelB}");
     }
     else
