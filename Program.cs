@@ -18,6 +18,21 @@ static List<string> GetAvailableModels(IConfiguration configuration)
     return models;
 }
 
+static string AppendReminderIfNeeded(string prompt, string reminderPrompt, int round, int reminderInterval)
+{
+    if (reminderInterval <= 0 || string.IsNullOrWhiteSpace(reminderPrompt))
+    {
+        return prompt;
+    }
+
+    if (round % reminderInterval != 0)
+    {
+        return prompt;
+    }
+
+    return $"{prompt}\n\nReminder: {reminderPrompt}";
+}
+
 // Helper method to prompt user to select a model
 static string SelectModel(List<string> availableModels, string botName, string? defaultModel)
 {
@@ -159,6 +174,45 @@ try
     string modelsList = $"{modelA.Name}, {modelB.Name}";
     logger.LogIntroduction(configuration, subjectTitle, modelsList, numberOfRounds);
 
+    // Configure reminder prompt and interval
+    string reminderPrompt = (subjectConfig.ReminderPrompt ?? string.Empty)
+        .Replace("{subject}", subjectTitle)
+        .Trim();
+
+    int reminderInterval;
+    if (args.Length > 4 && int.TryParse(args[4], out int argReminderInterval) && argReminderInterval > 0 && argReminderInterval <= 500)
+    {
+        reminderInterval = argReminderInterval;
+        Console.WriteLine($"Using reminder interval from argument: every {reminderInterval} rounds.");
+    }
+    else if (subjectConfig.ReminderInterval.HasValue && subjectConfig.ReminderInterval.Value > 0 && subjectConfig.ReminderInterval.Value <= 500)
+    {
+        reminderInterval = subjectConfig.ReminderInterval.Value;
+    }
+    else
+    {
+        Console.Write("\nEnter the reminder interval in rounds (1-500) [default: 5]: ");
+        string? reminderInput = Console.ReadLine();
+
+        if (string.IsNullOrWhiteSpace(reminderInput))
+        {
+            reminderInterval = 5;
+        }
+        else if (int.TryParse(reminderInput, out int userInterval) && userInterval >= 1 && userInterval <= 500)
+        {
+            reminderInterval = userInterval;
+        }
+        else
+        {
+            throw new ArgumentException("Invalid reminder interval. Must be between 1 and 500.");
+        }
+    }
+
+    if (string.IsNullOrEmpty(reminderPrompt))
+    {
+        reminderPrompt = $"Please keep the discussion focused on {subjectTitle}.";
+    }
+
     // Get available models and let user choose
     var availableModels = GetAvailableModels(configuration);
     
@@ -239,8 +293,10 @@ try
         Console.WriteLine($"\n\n===== Conversation Round {round} =====");
 
         // Bot A responds to the previous message.
+        string promptForA = AppendReminderIfNeeded(lastResponse, reminderPrompt, round, reminderInterval);
+
         string newResponseA = await botA.SendAndLogResponseAsync(
-            lastResponse,
+            promptForA,
             $"\n>>> {botA.Name} responding to {botB.Name}:",
             ConsoleColor.Green,
             logger,
@@ -248,8 +304,10 @@ try
             round);
 
         // Bot B responds to Bot A's message.
+        string promptForB = AppendReminderIfNeeded(newResponseA, reminderPrompt, round, reminderInterval);
+
         string newResponseB = await botB.SendAndLogResponseAsync(
-            newResponseA,
+            promptForB,
             $"\n>>> {botB.Name} responding to {botA.Name}:",
             ConsoleColor.Blue,
             logger,
