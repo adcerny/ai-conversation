@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Azure;
 using Azure.AI.Inference;
@@ -6,17 +7,16 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Yaml;
 
-// Helper method to get list of available models from configuration (fallback)
-static List<ModelMetadata> GetAvailableModels(IConfiguration configuration)
+// Helper method to provide a minimal fallback list when the API is unavailable
+static List<ModelMetadata> GetFallbackModels(ChatModelConfig modelA, ChatModelConfig modelB)
 {
-    var models = configuration.GetSection("AvailableModels").Get<List<string>>();
-    if (models == null || models.Count == 0)
-    {
-        // Fallback to a basic list if not configured
-        models = new List<string> { "gpt-4o-mini", "gpt-4o", "Phi-4-reasoning" };
-    }
+    var defaults = new List<string?> { modelA.Name, modelB.Name, "gpt-4o-mini", "gpt-4o" };
 
-    return models.Select(name => new ModelMetadata { Name = name }).ToList();
+    return defaults
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .Select(name => new ModelMetadata { Name = name! })
+        .ToList();
 }
 
 static string AppendReminderIfNeeded(string prompt, string reminderPrompt, int round, int reminderInterval)
@@ -233,14 +233,14 @@ try
         availableModels = catalogModels.ToList();
         if (availableModels.Count == 0)
         {
-            Console.WriteLine("No models returned from API. Falling back to configuration.");
-            availableModels = GetAvailableModels(configuration);
+            Console.WriteLine("No models returned from API. Falling back to defaults.");
+            availableModels = GetFallbackModels(modelA, modelB);
         }
     }
     catch (Exception ex)
     {
         Console.WriteLine($"Failed to load models from API: {ex.Message}");
-        availableModels = GetAvailableModels(configuration);
+        availableModels = GetFallbackModels(modelA, modelB);
     }
 
     if (showModelSummary)

@@ -17,20 +17,6 @@ ModelEndpoint: "https://models.inference.ai.azure.com"
 # Default subject if none is passed as a command line argument
 SelectedSubject: "MetaphysicsSymposium"
 
-# Available models for selection
-AvailableModels:
-  - "gpt-4o"
-  - "gpt-4o-mini"
-  - "gpt-4"
-  - "gpt-3.5-turbo"
-  - "o1-preview"
-  - "o1-mini"
-  - "Phi-4"
-  - "DeepSeek-V3-0324"
-  - "Llama-3.3-70B-Instruct"
-  - "Mistral-large-2411"
-  - "Mistral-small"
-
 Subjects:
   RelativityParadoxDebate:
     Title: "Relativity and the Speed of Light Paradox"
