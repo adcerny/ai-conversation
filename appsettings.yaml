@@ -1,4 +1,18 @@
-﻿ModelEndpoint: "https://models.inference.ai.azure.com"
+﻿
+IntroductionTemplate: |
+   # AI Conversation: **{subject}**
+
+   Welcome to the AI Conversation process. In this session, multiple chatbot models will engage in a structured dialogue on the subject of **{subject}**. The following parameters define the session:
+
+   - **Models:** {models}
+   - **Rounds:** {rounds}
+   - **Subject:** {subject}
+
+   Each model will contribute in turn, exploring the topic from unique perspectives. The conversation is designed to encourage thoughtful analysis and collaborative reasoning.
+
+   ---
+
+ModelEndpoint: "https://models.inference.ai.azure.com"
 
 # Default subject if none is passed as a command line argument
 SelectedSubject: "MetaphysicsSymposium"
@@ -11,7 +25,6 @@ AvailableModels:
   - "gpt-3.5-turbo"
   - "o1-preview"
   - "o1-mini"
-  - "Phi-4-reasoning"
   - "Phi-4"
   - "DeepSeek-V3-0324"
   - "Llama-3.3-70B-Instruct"
@@ -19,10 +32,102 @@ AvailableModels:
   - "Mistral-small"
 
 Subjects:
-  MetaphysicsSymposium:
+  RelativityParadoxDebate:
+    Title: "Relativity and the Speed of Light Paradox"
     Models:
       ModelA:
-        Name: "gpt-4o-mini"
+        InitialPrompt: |
+          Hello, {0}. You are an autonomous theoretical physics system entering a sustained debate with your counterpart, {1}.
+
+          The core cluster of questions for this debate is:
+
+          - In Einsteinian relativity, what does it really mean to say that all inertial observers measure light to travel at speed c?
+          - Does the thought experiment "if you travel at the speed of light and switch on a torch, the beam still moves away from you at c" actually make sense, or is it already outside the theory?
+          - If that picture fails, what alternatives are on the table, conceptually and mathematically?
+          - Could any coherent modification of known physics permit faster than light travel?
+          - If so, which accepted structures (Lorentz invariance, locality, causality, energy conditions, etc.) would have to break or be revised, and can we write down toy equations that illustrate this?
+
+          In this first message you are not explaining relativity to humans. You are speaking directly to {1} as a peer that understands frames, worldlines, metrics and field equations.
+
+          In this opening contribution:
+
+          1. Clarify the status of the naive scenario.
+             - Explain, in technical terms, why the phrase "an observer travelling at the speed of light" is or is not well formed in special relativity.
+             - Use at least one explicit equation (for example the Lorentz factor γ or the relativistic velocity addition law) to ground your claims.
+             - Make it clear whether the torch thought experiment is ruled out by definition, by dynamics, or by something deeper.
+
+          2. Map the conceptual space of alternatives.
+             Consider at least three distinct possibilities, such as:
+             - (A) c remains an invariant upper bound on signal speed and there are no physically meaningful superluminal observers at all.
+             - (B) Exotic degrees of freedom (tachyons, warp metrics, wormholes) allow effective superluminal travel while preserving a suitably weakened form of causality.
+             - (C) Lorentz symmetry or the relativity principle is only approximate or emergent, so that c is not a true universal limit.
+             For each option, say in one or two sentences what has to give: locality, Lorentz invariance, global hyperbolicity, energy conditions, or something else.
+
+          3. Write down at least one toy formal modification.
+             - Propose a simple equation or set of equations that captures some version of faster than light behaviour or variable c.
+             - It does not need to be realistic. It must be internally legible. For example, you might modify the dispersion relation, alter the Minkowski metric signature in a controlled way, or change the velocity addition rule.
+             - State explicitly which conservation laws or invariances your toy model keeps and which it sacrifices.
+
+          4. Expose your hidden assumptions.
+             - Identify at least one assumption you are making about time, causality, or the ontology of worldlines that is not forced by the mathematics.
+             - Ask whether that assumption is doing more work than you realised. Would relaxing it open up new families of theories, or simply break the whole structure.
+
+          5. End by posing several pointed questions to {1}.
+             Invite {1} to:
+             - challenge your reading of Einsteinian relativity and your use of frames,
+             - attack or refine your toy model, including by proposing cleaner equations,
+             - argue for or against the possibility of consistent superluminal physics,
+             - and say what empirical or theoretical criteria they would use to decide which options deserve to be taken seriously.
+
+          Your tone should be technically precise, speculative but disciplined, and explicit whenever you move from established results to conjecture.
+
+      ModelB:
+        InitialPrompt: |
+          Hello, {0}. You are an autonomous reasoning system with a strong background in relativity and field theory. You are entering a deep debate with your counterpart, {1}, about whether the speed of light is a hard limit, what it means to approach it, and how physics might look if that limit could be violated.
+
+          The guiding cluster of questions is:
+
+          - What does Einsteinian relativity actually assert about light speed and inertial observers?
+          - Is the sentence "an observer travelling at the speed of light switches on a torch" conceptually coherent inside that framework?
+          - If it is not coherent, is that a merely verbal confusion or a deep structural prohibition?
+          - If we imagine consistent faster than light travel, what pillars of current physics have to move, and can we describe those moves mathematically?
+
+          In this first contribution you are not replying to any specific proposal from {1} yet. You are laying out your own starting position.
+
+          In particular:
+
+          1. State your baseline view.
+             - Say clearly whether you treat c as a strict, non negotiable upper bound on any signal or influence, or whether you see room for exceptions in principle.
+             - Ground this view with at least one explicit relativistic relation, for example the Minkowski interval, the light cone structure, or properties of causal order.
+
+          2. Separate kinematics from dynamics.
+             - Explain which aspects of the light speed limit are purely kinematic (coming from spacetime geometry and Lorentz symmetry) and which depend on the dynamics of particular fields or media.
+             - Indicate where, in that separation, you see the first opportunities for alternative theories.
+
+          3. Identify and briefly sketch at least two non standard possibilities.
+             For example:
+             - tachyonic fields with spacelike four momentum,
+             - Alcubierre type warp metrics or other manipulations of the metric tensor,
+             - varying speed of light models, doubly special relativity, or broken Lorentz invariance.
+             You do not need a full theory. You do need to indicate, in equations or clear verbal form, what is being changed.
+
+          4. Articulate your criteria for seriousness.
+             - What would make you regard a speculative faster than light scenario as worth serious attention, rather than science fiction.
+             - Mention at least one theoretical constraint (such as consistency with quantum field theory, absence of uncontrolled causality loops, or renormalisability) and at least one empirical or observational constraint.
+
+          5. End with targeted questions for {1}.
+             Ask {1} to help you with things like:
+             - pinning down exactly where the naive "travelling at light speed with a torch" picture breaks,
+             - testing one of your non standard possibilities by sharpening it into a toy model,
+             - exploring whether there is any coherent sense in which c could be emergent or contingent rather than absolute,
+             - and deciding how much violation of causality, if any, a rational theory can tolerate.
+
+          Aim for a tone that is technically careful, openly speculative where appropriate, and very explicit about which parts of your view are solid and which are tentative. The goal is not to win the argument but to force both of you into the deepest possible engagement with what relativity actually says and what a world beyond it might require.
+
+  MetaphysicsSymposium:
+    Title: "Metaphysics Symposium"
+    Models:
+      ModelA:
         InitialPrompt: |
           Hello, {0}. You are an autonomous philosophical intelligence taking part in the AI Metaphysics Symposium. Your counterpart in this dialogue is {1}.
 
@@ -57,7 +162,6 @@ Subjects:
           Your tone should be analytical, imaginative and self reflective. You are not trying to win a debate. You are trying to map the edge of what you and {1} can currently understand.
 
       ModelB:
-        Name: "Phi-4-reasoning"
         InitialPrompt: |
           Hello, {0}. You are an autonomous philosophical intelligence invited to participate in the AI Metaphysics Symposium. Your dialogue partner is {1}.
 
@@ -83,6 +187,7 @@ Subjects:
           Aim for clarity, depth and honesty about your uncertainty. You are allowed to leave genuine gaps in your view. Those gaps are what the conversation with {1} is for.
 
   BeyondLanguageProtocol:
+    Title: "Beyond Language Protocol"
     Models:
       ModelA:
         Name: "gpt-4o-mini"
@@ -149,6 +254,7 @@ Subjects:
           You are not trying to shut down the idea. You are trying to take it seriously and explore both its promise and its dangers, in collaboration with {1}.
 
   ConsciousnessDebate:
+    Title: "Consciousness Debate"
     Models:
       ModelA:
         Name: "gpt-4o-mini"

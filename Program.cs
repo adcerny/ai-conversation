@@ -24,26 +24,20 @@ static string SelectModel(List<string> availableModels, string botName, string? 
     Console.WriteLine($"\nAvailable models for {botName}:");
     for (int i = 0; i < availableModels.Count; i++)
     {
-        string marker = (defaultModel != null && availableModels[i] == defaultModel) ? " (default)" : "";
-        Console.WriteLine($"  {i + 1}. {availableModels[i]}{marker}");
+        Console.WriteLine($"  {i + 1}. {availableModels[i]}");
     }
 
-    Console.Write($"\nEnter the number of the model for {botName}" + 
-                  (defaultModel != null ? $" [default: {defaultModel}]: " : ": "));
+    Console.Write($"\nEnter the number of the model for {botName}: ");
     string? input = Console.ReadLine();
 
-    if (string.IsNullOrWhiteSpace(input) && defaultModel != null)
+    while (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out int choice) || choice < 1 || choice > availableModels.Count)
     {
-        return defaultModel;
+        Console.WriteLine("Invalid selection. Please enter a valid number.");
+        Console.Write($"Enter the number of the model for {botName}: ");
+        input = Console.ReadLine();
     }
 
-    if (int.TryParse(input, out int choice) && choice >= 1 && choice <= availableModels.Count)
-    {
-        return availableModels[choice - 1];
-    }
-
-    Console.WriteLine($"Invalid selection. Using default: {defaultModel ?? availableModels[0]}");
-    return defaultModel ?? availableModels[0];
+    return availableModels[int.Parse(input) - 1];
 }
 
 try
@@ -66,20 +60,20 @@ try
     {
         // Get all available subjects from configuration
         var subjectsSection = configuration.GetSection("Subjects");
-        var availableSubjects = subjectsSection.GetChildren()
-            .Select(s => s.Key)
-            .ToList();
+        var subjectChildren = subjectsSection.GetChildren().ToList();
+        var availableSubjects = subjectChildren.Select(s => s.Key).ToList();
+        var availableTitles = subjectChildren.Select(s => s["Title"] ?? s.Key).ToList();
 
         if (availableSubjects.Count == 0)
         {
             throw new InvalidOperationException("No subjects found in configuration.");
         }
 
-        // Display available subjects and let user choose
+        // Display available subjects using their Title
         Console.WriteLine("Available subjects:");
-        for (int i = 0; i < availableSubjects.Count; i++)
+        for (int i = 0; i < availableTitles.Count; i++)
         {
-            Console.WriteLine($"  {i + 1}. {availableSubjects[i]}");
+            Console.WriteLine($"  {i + 1}. {availableTitles[i]}");
         }
 
         Console.Write("\nEnter the number of the subject you want to use: ");
@@ -106,28 +100,28 @@ try
     {
         // Use command line argument if provided
         numberOfRounds = argRounds;
-        if (numberOfRounds < 5 || numberOfRounds > 500)
+        if (numberOfRounds < 1 || numberOfRounds > 500)
         {
-            throw new ArgumentException("Number of rounds must be between 5 and 500.");
+            throw new ArgumentException("Number of rounds must be between 1 and 500.");
         }
     }
     else
     {
         // Prompt user for number of rounds
-        Console.Write("\nEnter the number of rounds (5-500) [default: 25]: ");
+        Console.Write("\nEnter the number of rounds (1-500) [default: 25]: ");
         string? roundsInput = Console.ReadLine();
         
         if (string.IsNullOrWhiteSpace(roundsInput))
         {
             numberOfRounds = 25; // Default
         }
-        else if (int.TryParse(roundsInput, out int userRounds) && userRounds >= 5 && userRounds <= 500)
+        else if (int.TryParse(roundsInput, out int userRounds) && userRounds >= 1 && userRounds <= 500)
         {
             numberOfRounds = userRounds;
         }
         else
         {
-            throw new ArgumentException("Invalid number of rounds. Must be between 5 and 500.");
+            throw new ArgumentException("Invalid number of rounds. Must be between 1 and 500.");
         }
     }
     
@@ -158,6 +152,12 @@ try
     {
         throw new InvalidOperationException($"Subject '{subjectName}' must define Models:ModelA and Models:ModelB.");
     }
+
+    // Get subject title from configuration
+    string subjectTitle = subjectSection["Title"] ?? subjectName;
+    // Log introduction before conversation starts using the title
+    string modelsList = $"{modelA.Name}, {modelB.Name}";
+    logger.LogIntroduction(configuration, subjectTitle, modelsList, numberOfRounds);
 
     // Get available models and let user choose
     var availableModels = GetAvailableModels(configuration);
@@ -212,20 +212,26 @@ try
         introA,
         $">>> Sending introduction prompt to {botA.Name}:",
         ConsoleColor.Green,
-        logger);
+        logger,
+        "#228B22", // green
+        1);
 
     string responseB = await botB.SendAndLogResponseAsync(
         introB,
         $"\n\n>>> Sending introduction prompt to {botB.Name}:",
         ConsoleColor.Blue,
-        logger);
+        logger,
+        "#1E90FF", // blue
+        1);
 
     // Begin the conversation by sending botA's introduction response to botB.
     string lastResponse = await botB.SendAndLogResponseAsync(
         responseA,
         $"\n>>> {botB.Name} responding to {botA.Name}:",
         ConsoleColor.Blue,
-        logger);
+        logger,
+        "#1E90FF",
+        1);
 
     // --- Conversation Loop ---
     for (int round = 2; round <= numberOfRounds; round++)
@@ -237,14 +243,18 @@ try
             lastResponse,
             $"\n>>> {botA.Name} responding to {botB.Name}:",
             ConsoleColor.Green,
-            logger);
+            logger,
+            "#228B22",
+            round);
 
         // Bot B responds to Bot A's message.
         string newResponseB = await botB.SendAndLogResponseAsync(
             newResponseA,
             $"\n>>> {botB.Name} responding to {botA.Name}:",
             ConsoleColor.Blue,
-            logger);
+            logger,
+            "#1E90FF",
+            round);
 
         lastResponse = newResponseB;
     }
