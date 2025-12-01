@@ -6,6 +6,7 @@ using Azure.AI.Inference;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Yaml;
+using NLog;
 
 // Helper method to provide a minimal fallback list when the API is unavailable
 static List<ModelMetadata> GetFallbackModels(ChatModelConfig modelA, ChatModelConfig modelB)
@@ -63,32 +64,44 @@ static string SelectModel(List<ModelMetadata> availableModels, string botName, s
 
 try
 {
-    bool showModelSummary = args.Any(arg => string.Equals(arg, "--model-summary", StringComparison.OrdinalIgnoreCase));
-    var positionalArgs = args
-        .Where(arg => !string.Equals(arg, "--model-summary", StringComparison.OrdinalIgnoreCase))
-        .ToArray();
-
     // Build configuration (using user secrets and appsettings.yaml)
     var configuration = new ConfigurationBuilder()
         .AddUserSecrets<ChatBot>() // ChatBot is defined in a separate file.
         .AddYamlFile("appsettings.yaml", optional: false, reloadOnChange: true)
         .Build();
 
+    ConversationLogger.ConfigureLogging(configuration);
+    var diagnostics = LogManager.GetLogger("Diagnostics");
+
+    bool showModelSummary = args.Any(arg => string.Equals(arg, "--model-summary", StringComparison.OrdinalIgnoreCase));
+    var positionalArgs = args
+        .Where(arg => !string.Equals(arg, "--model-summary", StringComparison.OrdinalIgnoreCase))
+        .ToArray();
+
+    diagnostics.Info("Configuration loaded. Diagnostics logging enabled={enabled}.", configuration["Logging:EnableDiagnostics"]);
+    diagnostics.Info("Starting program with {argCount} argument(s). showModelSummary={showModelSummary}", positionalArgs.Length, showModelSummary);
+
+    var logger = new ConversationLogger();
+
     // Choose subject
     string subjectName;
     
     if (positionalArgs.Length > 0)
     {
+        diagnostics.Info("Selecting subject from command-line argument: {arg}", positionalArgs[0]);
         // Use command line argument if provided
         subjectName = positionalArgs[0];
     }
     else
     {
+        diagnostics.Info("No subject argument provided; reading available subjects from configuration.");
         // Get all available subjects from configuration
         var subjectsSection = configuration.GetSection("Subjects");
         var subjectChildren = subjectsSection.GetChildren().ToList();
         var availableSubjects = subjectChildren.Select(s => s.Key).ToList();
         var availableTitles = subjectChildren.Select(s => s["Title"] ?? s.Key).ToList();
+
+        diagnostics.Info("Found {count} subject(s) in configuration.", availableSubjects.Count);
 
         if (availableSubjects.Count == 0)
         {
@@ -108,12 +121,14 @@ try
         if (int.TryParse(input, out int choice) && choice >= 1 && choice <= availableSubjects.Count)
         {
             subjectName = availableSubjects[choice - 1];
+            diagnostics.Info("User selected subject by number: {subject}", subjectName);
         }
         else
         {
             // Fall back to SelectedSubject in config or default
             subjectName = configuration["SelectedSubject"] ?? "MetaphysicsSymposium";
             Console.WriteLine($"Invalid selection. Using default: {subjectName}");
+            diagnostics.Info("Invalid subject selection; falling back to default {subject}", subjectName);
         }
     }
 
@@ -124,6 +139,7 @@ try
     
     if (positionalArgs.Length > 1 && int.TryParse(positionalArgs[1], out int argRounds))
     {
+        diagnostics.Info("Parsing number of rounds from argument: {rounds}", argRounds);
         // Use command line argument if provided
         numberOfRounds = argRounds;
         if (numberOfRounds < 1 || numberOfRounds > 500)
@@ -144,6 +160,7 @@ try
         else if (int.TryParse(roundsInput, out int userRounds) && userRounds >= 1 && userRounds <= 500)
         {
             numberOfRounds = userRounds;
+            diagnostics.Info("User entered number of rounds: {rounds}", numberOfRounds);
         }
         else
         {
@@ -157,9 +174,8 @@ try
     string token = configuration["GITHUB_TOKEN"] ??
                    Environment.GetEnvironmentVariable("GITHUB_TOKEN") ??
                    throw new InvalidOperationException("Make sure to add GITHUB_TOKEN value to the user secrets or environment variables.");
+    diagnostics.Info("Retrieved GitHub token from configuration/environment (length: {length}).", token.Length);
 
-    // Configure conversation logging
-    ConversationLogger.ConfigureLogging(configuration);
     var logger = new ConversationLogger();
 
     // Load the selected subject configuration
@@ -171,6 +187,7 @@ try
 
     var subjectConfig = subjectSection.Get<SubjectConfig>()
                         ?? throw new InvalidOperationException($"Failed to bind configuration for subject '{subjectName}'.");
+    diagnostics.Info("Loaded subject configuration for {subject}", subjectName);
 
     // Extract models from the subject
     if (!subjectConfig.Models.TryGetValue("ModelA", out var modelA) ||
@@ -178,6 +195,7 @@ try
     {
         throw new InvalidOperationException($"Subject '{subjectName}' must define Models:ModelA and Models:ModelB.");
     }
+    diagnostics.Info("Subject models loaded: ModelA={modelA}, ModelB={modelB}", modelA.Name, modelB.Name);
 
     // Get subject title from configuration
     string subjectTitle = subjectSection["Title"] ?? subjectName;
@@ -195,10 +213,12 @@ try
     {
         reminderInterval = argReminderInterval;
         Console.WriteLine($"Using reminder interval from argument: every {reminderInterval} rounds.");
+        diagnostics.Info("Reminder interval provided via argument: {interval}", reminderInterval);
     }
     else if (subjectConfig.ReminderInterval.HasValue && subjectConfig.ReminderInterval.Value > 0 && subjectConfig.ReminderInterval.Value <= 500)
     {
         reminderInterval = subjectConfig.ReminderInterval.Value;
+        diagnostics.Info("Reminder interval provided via configuration: {interval}", reminderInterval);
     }
     else
     {
@@ -212,6 +232,7 @@ try
         else if (int.TryParse(reminderInput, out int userInterval) && userInterval >= 1 && userInterval <= 500)
         {
             reminderInterval = userInterval;
+            diagnostics.Info("User entered reminder interval: {interval}", reminderInterval);
         }
         else
         {
@@ -222,28 +243,31 @@ try
     if (string.IsNullOrEmpty(reminderPrompt))
     {
         reminderPrompt = $"Please keep the discussion focused on {subjectTitle}.";
+        diagnostics.Info("No reminder prompt configured; using default for subject {subject}", subjectTitle);
     }
 
     // Get available models and let user choose
     var modelCatalogClient = new ModelCatalogClient(token);
+    diagnostics.Info("Created ModelCatalogClient; beginning model fetch.");
     List<ModelMetadata> availableModels;
     try
     {
         var catalogModels = await modelCatalogClient.GetModelsAsync();
         availableModels = catalogModels.ToList();
-        Console.WriteLine($"Received {availableModels.Count} models from API.");
+        diagnostics.Info("Received {count} models from API.", availableModels.Count);
         if (availableModels.Count == 0)
         {
-            Console.WriteLine("No models returned from API. Falling back to defaults.");
+            diagnostics.Info("No models returned from API. Falling back to defaults.");
             availableModels = GetFallbackModels(modelA, modelB);
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Failed to load models from API: {ex.Message}");
-        Console.WriteLine(ex.ToString());
+        diagnostics.Error(ex, "Failed to load models from API; using fallback list.");
         availableModels = GetFallbackModels(modelA, modelB);
     }
+
+    diagnostics.Info("Final available model count: {count}", availableModels.Count);
 
     if (showModelSummary)
     {
@@ -288,20 +312,24 @@ try
     {
         selectedModelA = positionalArgs[2];
         Console.WriteLine($"Using ModelA from argument: {selectedModelA}");
+        diagnostics.Info("ModelA provided by argument: {model}", selectedModelA);
     }
     else
     {
         selectedModelA = SelectModel(availableModels, "ModelA", modelA.Name);
+        diagnostics.Info("ModelA selected via prompt: {model}", selectedModelA);
     }
 
     if (positionalArgs.Length > 3)
     {
         selectedModelB = positionalArgs[3];
         Console.WriteLine($"Using ModelB from argument: {selectedModelB}");
+        diagnostics.Info("ModelB provided by argument: {model}", selectedModelB);
     }
     else
     {
         selectedModelB = SelectModel(availableModels, "ModelB", modelB.Name);
+        diagnostics.Info("ModelB selected via prompt: {model}", selectedModelB);
     }
     
     Console.WriteLine($"\nModelA: {selectedModelA}");
@@ -310,6 +338,7 @@ try
     // Load the model endpoint from configuration.
     string modelEndpointStr = configuration["ModelEndpoint"] ?? "https://models.inference.ai.azure.com";
     Uri modelEndpoint = new Uri(modelEndpointStr);
+    diagnostics.Info("Using model endpoint: {endpoint}", modelEndpoint);
 
     // Create chat clients.
     IChatClient clientA = new ChatCompletionsClient(modelEndpoint, new AzureKeyCredential(token))

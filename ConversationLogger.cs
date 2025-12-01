@@ -1,10 +1,10 @@
-﻿using NLog;
-using NLog.Config;
-using NLog.Targets;
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
+using NLog;
+using NLog.Config;
+using NLog.Targets;
 
 public class ConversationLogger
 {
@@ -44,6 +44,20 @@ public class ConversationLogger
 
         config.AddTarget(mdTarget);
         config.AddRule(LogLevel.Info, LogLevel.Fatal, mdTarget);
+
+        // Optional console diagnostics for troubleshooting (off by default).
+        bool diagnosticsEnabled = bool.TryParse(configuration["Logging:EnableDiagnostics"], out var enabled) && enabled;
+        if (diagnosticsEnabled)
+        {
+            var consoleTarget = new ColoredConsoleTarget("consoleLog")
+            {
+                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}${exception:format=ToString}"
+            };
+
+            config.AddTarget(consoleTarget);
+            config.AddRule(LogLevel.Info, LogLevel.Fatal, consoleTarget, "Diagnostics");
+        }
+
         LogManager.Configuration = config;
     }
 
