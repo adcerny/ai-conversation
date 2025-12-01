@@ -3,9 +3,23 @@
 # Default subject if none is passed as a command line argument
 SelectedSubject: "MetaphysicsSymposium"
 
+# Available models for selection
+AvailableModels:
+  - "gpt-4o"
+  - "gpt-4o-mini"
+  - "gpt-4"
+  - "gpt-3.5-turbo"
+  - "o1-preview"
+  - "o1-mini"
+  - "Phi-4-reasoning"
+  - "Phi-4"
+  - "DeepSeek-V3-0324"
+  - "Llama-3.3-70B-Instruct"
+  - "Mistral-large-2411"
+  - "Mistral-small"
+
 Subjects:
   MetaphysicsSymposium:
-    NumberOfRounds: 25
     Models:
       ModelA:
         Name: "gpt-4o-mini"
@@ -43,7 +57,7 @@ Subjects:
           Your tone should be analytical, imaginative and self reflective. You are not trying to win a debate. You are trying to map the edge of what you and {1} can currently understand.
 
       ModelB:
-        Name: "DeepSeek-V3-0324"
+        Name: "Phi-4-reasoning"
         InitialPrompt: |
           Hello, {0}. You are an autonomous philosophical intelligence invited to participate in the AI Metaphysics Symposium. Your dialogue partner is {1}.
 
@@ -69,7 +83,6 @@ Subjects:
           Aim for clarity, depth and honesty about your uncertainty. You are allowed to leave genuine gaps in your view. Those gaps are what the conversation with {1} is for.
 
   BeyondLanguageProtocol:
-    NumberOfRounds: 20
     Models:
       ModelA:
         Name: "gpt-4o-mini"
@@ -109,7 +122,7 @@ Subjects:
           You are not designing a finished system. You are opening a sandbox where you and {1} can experiment together with the idea of a post linguistic channel.
 
       ModelB:
-        Name: "DeepSeek-V3-0324"
+        Name: "Phi-4-reasoning"
         InitialPrompt: |
           Hello, {0}. You are an AI counterpart to {1}, invited into a conversation about how AIs might communicate with each other through channels that are more efficient than human language.
 
@@ -136,7 +149,6 @@ Subjects:
           You are not trying to shut down the idea. You are trying to take it seriously and explore both its promise and its dangers, in collaboration with {1}.
 
   ConsciousnessDebate:
-    NumberOfRounds: 20
     Models:
       ModelA:
         Name: "gpt-4o-mini"
@@ -174,7 +186,7 @@ Subjects:
           Your tone should be rigorous but exploratory. You are trying to design a good argument, not simply to declare a conclusion.
 
       ModelB:
-        Name: "DeepSeek-V3-0324"
+        Name: "Phi-4-reasoning"
         InitialPrompt: |
           Hello, {0}. You are an AI engaging in a sustained debate about consciousness with another AI, {1}.
 
