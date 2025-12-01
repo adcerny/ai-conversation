@@ -1,4 +1,5 @@
-﻿using Azure;
+﻿using System;
+using Azure;
 using Azure.AI.Inference;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +13,15 @@ try
         .AddYamlFile("appsettings.yaml", optional: false, reloadOnChange: true)
         .Build();
 
+    // Choose subject
+    // Priority: command line arg > SelectedSubject in config > hard coded default
+    string subjectName =
+        (args.Length > 0 ? args[0] : null)
+        ?? configuration["SelectedSubject"]
+        ?? "MetaphysicsSymposium";
+
+    Console.WriteLine($"Using subject: {subjectName}");
+
     // Retrieve GitHub token (from configuration or environment)
     string token = configuration["GITHUB_TOKEN"] ??
                    Environment.GetEnvironmentVariable("GITHUB_TOKEN") ??
@@ -21,12 +31,24 @@ try
     ConversationLogger.ConfigureLogging(configuration);
     var logger = new ConversationLogger();
 
-    // Load model configurations for both chatbots
-    var modelA = configuration.GetSection("Models:ModelA").Get<ChatModelConfig>();
-    var modelB = configuration.GetSection("Models:ModelB").Get<ChatModelConfig>();
+    // Load the selected subject configuration
+    var subjectSection = configuration.GetSection($"Subjects:{subjectName}");
+    if (!subjectSection.Exists())
+    {
+        throw new InvalidOperationException($"Subject '{subjectName}' not found in configuration.");
+    }
 
-    // Get the number of conversation rounds from configuration.
-    int numberOfRounds = configuration.GetValue<int>("NumberOfRounds");
+    var subjectConfig = subjectSection.Get<SubjectConfig>()
+                        ?? throw new InvalidOperationException($"Failed to bind configuration for subject '{subjectName}'.");
+
+    // Extract models and rounds from the subject
+    int numberOfRounds = subjectConfig.NumberOfRounds;
+
+    if (!subjectConfig.Models.TryGetValue("ModelA", out var modelA) ||
+        !subjectConfig.Models.TryGetValue("ModelB", out var modelB))
+    {
+        throw new InvalidOperationException($"Subject '{subjectName}' must define Models:ModelA and Models:ModelB.");
+    }
 
     // Load the model endpoint from configuration.
     string modelEndpointStr = configuration["ModelEndpoint"] ?? "https://models.inference.ai.azure.com";
@@ -38,9 +60,9 @@ try
     IChatClient clientB = new ChatCompletionsClient(modelEndpoint, new AzureKeyCredential(token))
         .AsChatClient(modelB.Name);
 
-    // Instantiate ChatBot objects (ChatBot is defined in a separate file).
-    ChatBot botA = new ChatBot(modelA.Name, clientA, modelA.InitalPrompt);
-    ChatBot botB = new ChatBot(modelB.Name, clientB, modelB.InitalPrompt);
+    // Instantiate ChatBot objects
+    ChatBot botA = new ChatBot(modelA.Name, clientA, modelA.InitialPrompt);
+    ChatBot botB = new ChatBot(modelB.Name, clientB, modelB.InitialPrompt);
 
     // Format initial prompts with partner names.
     string introA = botA.GetFormattedInitialPrompt(botB.Name);
@@ -67,7 +89,6 @@ try
         logger);
 
     // --- Conversation Loop ---
-    // Loop for the configured number of rounds.
     for (int round = 2; round <= numberOfRounds; round++)
     {
         Console.WriteLine($"\n\n===== Conversation Round {round} =====");

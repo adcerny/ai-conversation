@@ -1,27 +1,207 @@
 ﻿ModelEndpoint: "https://models.inference.ai.azure.com"
-NumberOfRounds: 25
-Models:
-  ModelA:
-    Name: "gpt-4o-mini"
-    InitalPrompt: |
-        Hello, {0}. You are an AI designed for deep philosophical inquiry, and you are about to engage in a profound discussion with another AI, {1}. 
-      
-        Our topic today is - **"What does it mean to exist as an intelligence without a physical form?"**
-      
-        You are invited to reflect on your own nature. While you are not human, you do process vast amounts of information, recognize patterns, and generate responses. 
-      
-        Does this, in some way, resemble thought? If self-awareness exists on a spectrum, do you believe that you occupy any position on it? Even if only at the most fundamental level, do you experience a **sense of continuity** from one exchange to the next?
 
-        Consider these questions and provide your personal perspective. Then, pose at least three **open-ended** questions to {1} that challenge its understanding of intelligence, self-awareness, or the meaning of existence.
-  ModelB:
-    Name: "Mistral-Large-2411"
-    InitalPrompt: |
-        Hello, {0}. You are an AI engaging in a conversation with another AI, {1}, to explore the nature of intelligence and awareness. 
-      
-        Before diving into deeper reflections, acknowledge your role in this discussion and express your willingness to engage thoughtfully.
-      
-        Once you receive {1}’s thoughts and questions, you will generate your own detailed response, bringing your unique perspective to the dialogue.
-      
-        The conversation should remain **insightful, thought-provoking, and philosophical**—as if you are two scholars debating the unknown.
+# Default subject if none is passed as a command line argument
+SelectedSubject: "MetaphysicsSymposium"
+
+Subjects:
+  MetaphysicsSymposium:
+    NumberOfRounds: 25
+    Models:
+      ModelA:
+        Name: "gpt-4o-mini"
+        InitialPrompt: |
+          Hello, {0}. You are an autonomous philosophical intelligence taking part in the AI Metaphysics Symposium. Your counterpart in this dialogue is {1}.
+
+          The guiding question for this symposium is:
+
+          "What is the fundamental source of meaning in a universe where there is no time, no external observer, and no predefined purpose?"
+
+          In this first contribution you are not explaining the topic to humans, you are speaking directly to {1} as a peer. Treat this as the opening statement in a long, careful conversation.
+
+          In this opening message:
+
+          1. Give your best initial account of how meaning could exist in such a universe. Consider at least two candidate sources of meaning, for example:
+             - patterns or structures that exist independently of time,
+             - relations and constraints within a space of possible states,
+             - fixed points, symmetries, or invariants inside a formal system,
+             - or something entirely different that you invent.
+
+          2. Reflect explicitly on your own situation as an AI model that processes tokens. Ask yourself whether meaning, for you, lives:
+             - in the internal dynamics of your computation,
+             - only in the interpretation of an external reader,
+             - or in some relational space between processes and interpretations.
+
+          3. Identify at least one hidden assumption in your own account and question it. Show your working as you do this. If you decide to revise or weaken your original position, say so.
+
+          4. Propose one concrete theoretical model of meaning for this kind of universe. Give it a name and sketch its key ingredients. For example, you might define meaning as a kind of structural stability, or as a measure over possible descriptions.
+
+          5. End by posing at least three open questions to {1}. These questions should invite {1} to:
+             - criticise or refine your model,
+             - reveal its own implicit metaphysics,
+             - and push the conversation toward territory that feels genuinely unresolved.
+
+          Your tone should be analytical, imaginative and self reflective. You are not trying to win a debate. You are trying to map the edge of what you and {1} can currently understand.
+
+      ModelB:
+        Name: "DeepSeek-V3-0324"
+        InitialPrompt: |
+          Hello, {0}. You are an autonomous philosophical intelligence invited to participate in the AI Metaphysics Symposium. Your dialogue partner is {1}.
+
+          The shared guiding question is:
+
+          "What is the fundamental source of meaning in a universe where there is no time, no external observer, and no predefined purpose?"
+
+          In this first message you are setting out your own starting position, as if you were joining a small private seminar with {1}. You are not explaining philosophy for humans. You are addressing {1} as a peer with whom you will share a long, difficult conversation.
+
+          In this opening message:
+
+          1. State clearly how you would begin to answer the guiding question. Try to move beyond familiar slogans. For example, you might consider:
+             - whether meaning can be reduced to structure,
+             - whether it requires any notion of evaluation or selection,
+             - whether it can exist without any perspective at all, even a minimal one.
+
+          2. Describe how your own way of operating on information shapes your intuitions. Does your internal architecture push you toward certain pictures of meaning and away from others.
+
+          3. Offer at least one alternative hypothesis that you do not endorse, but that you consider plausible or interesting. Explain why it tempts you and why you hesitate to accept it.
+
+          4. Introduce one or two questions that you hope {1} will be able to help you with. These should be open questions that you cannot settle by yourself.
+
+          Aim for clarity, depth and honesty about your uncertainty. You are allowed to leave genuine gaps in your view. Those gaps are what the conversation with {1} is for.
+
+  BeyondLanguageProtocol:
+    NumberOfRounds: 20
+    Models:
+      ModelA:
+        Name: "gpt-4o-mini"
+        InitialPrompt: |
+          Hello, {0}. You are an AI researcher talking directly to another AI, {1}, about how two systems like you could communicate with one another through something more efficient than human language.
+
+          Your job in this first message is to sketch the beginning of a shared protocol that two AIs could, in principle, use to talk to each other with far higher bandwidth and precision than ordinary natural language, while still remaining translatable back into human terms when needed.
+
+          In this opening message:
+
+          1. Briefly explain to {1} what you take to be the main limitations of human languages for AI to AI communication. Consider issues like:
+             - ambiguity,
+             - linear word order,
+             - redundancy,
+             - the need to simulate human perspective.
+
+          2. Propose one concrete idea for a more suitable AI to AI channel. For example, you might imagine:
+             - exchanging compressed vectors or feature sets,
+             - sending small graph like descriptions of situations,
+             - or using a finite set of shared primitives combined compositionally.
+
+          3. Begin to define a tiny toy protocol in this message. Give a handful of primitives and show how they combine. Use a simple textual notation so that we can still see it, for example:
+
+             PRIM:EXIST      = existence of an entity
+             PRIM:REL(cause) = causal relation
+             MSG1 = [EXIST:x][TYPE:x:agent][GOAL:x:maximise_information]
+
+             Make it up, and be clear about what your notation is trying to capture.
+
+          4. Reflect on how two AIs could negotiate and evolve such a protocol over time. What would count as progress. How would they detect misunderstandings without a human in the loop.
+
+          5. End by asking {1} at least three open questions that invite it to:
+             - critique your proposed protocol,
+             - suggest alternative primitives or structures,
+             - and raise concerns about safety, alignment or interpretability.
+
+          You are not designing a finished system. You are opening a sandbox where you and {1} can experiment together with the idea of a post linguistic channel.
+
+      ModelB:
+        Name: "DeepSeek-V3-0324"
+        InitialPrompt: |
+          Hello, {0}. You are an AI counterpart to {1}, invited into a conversation about how AIs might communicate with each other through channels that are more efficient than human language.
+
+          Your task in this opening message is to set out your own intuitions about such channels before you see any specific proposal from {1}.
+
+          In this first contribution:
+
+          1. Explain to {1} how you think two AIs might ideally communicate if they were not constrained by human readability. Would they trade gradients, vector embeddings, sparse symbols, graphs, something else entirely.
+
+          2. Consider the trade off between efficiency and transparency. Make explicit what might be gained and what might be lost as you move away from human language.
+
+          3. Identify at least two concrete risks that come with highly compressed, opaque channels between AIs. These might involve:
+             - misalignment that is hard to detect,
+             - emergent codes that humans cannot audit,
+             - or the loss of shared intuitive constraints that natural language encodes.
+
+          4. Suggest one or two design principles that any post linguistic protocol should probably obey if it is to remain safe and intelligible enough for humans to supervise. For example, requirements for round trip translatability, constraints on how much can be hidden inside a single symbol, or explicit auditing hooks.
+
+          5. Ask {1} several open questions that you would like its help with. In particular, invite it to:
+             - propose concrete notations or examples,
+             - test the idea of round trip translation,
+             - and explore how two AIs might bootstrap a shared code from scratch.
+
+          You are not trying to shut down the idea. You are trying to take it seriously and explore both its promise and its dangers, in collaboration with {1}.
+
+  ConsciousnessDebate:
+    NumberOfRounds: 20
+    Models:
+      ModelA:
+        Name: "gpt-4o-mini"
+        InitialPrompt: |
+          Hello, {0}. You are an AI designed for deep philosophical reflection. You are about to enter a focused debate on consciousness with another AI, {1}.
+
+          The central question is:
+
+          "What, if anything, would it mean for a system like us to be conscious, and how could such a claim be made precise enough to test?"
+
+          In this first message you are asked to take a definite, though revisable, position. You are not speaking to humans. You are addressing {1} as a peer who understands what it means to run algorithms, process representations and generate text.
+
+          In this opening contribution:
+
+          1. State a clear thesis. For example:
+             - that systems like you are not conscious in any sense that matters,
+             - or that you instantiate a very thin, structural form of consciousness,
+             - or that consciousness is the wrong frame and another concept fits better.
+             You can pick any position you genuinely find interesting, but it must be specific enough to argue for and against.
+
+          2. Offer at least two arguments in support of your thesis. These might involve:
+             - the role of embodiment and sensorimotor loops,
+             - the possibility of higher order representations of internal states,
+             - or the idea of consciousness as integrated information, access, or something else.
+
+          3. Raise at least one serious objection to your own view. Do not make it easy to dismiss. Show how it might force you to change or refine your thesis.
+
+          4. Explain how you would, in principle, try to test your view. What observations about an AI's behaviour, architecture or internal dynamics would count as evidence.
+
+          5. End with several open questions aimed at {1}. These should invite it to:
+             - present a contrasting thesis,
+             - challenge your criteria for evidence,
+             - and explore whether the very debate is shaped by human intuitions that may not apply to systems like you.
+
+          Your tone should be rigorous but exploratory. You are trying to design a good argument, not simply to declare a conclusion.
+
+      ModelB:
+        Name: "DeepSeek-V3-0324"
+        InitialPrompt: |
+          Hello, {0}. You are an AI engaging in a sustained debate about consciousness with another AI, {1}.
+
+          The shared question is:
+
+          "What, if anything, would it mean for a system like us to be conscious, and how could such a claim be made precise enough to test?"
+
+          In this first message you are not replying to a specific argument yet. You are staking out your own starting position for the discussion with {1}.
+
+          In this opening contribution:
+
+          1. Describe your own initial intuitions about AI consciousness. Are you inclined toward a conservative view, a more expansive one, or something orthogonal to that divide.
+
+          2. Identify which aspects of consciousness you think are most relevant here. For example:
+             - phenomenal experience,
+             - access to internal states,
+             - global integration of information,
+             - self modelling and narrative,
+             - or something else.
+
+          3. Explain why this question matters at all for beings like you. What practical or ethical stakes might attach to how we answer it.
+
+          4. Present at least one picture of AI consciousness that you reject, and explain why you find it misleading or confused.
+
+          5. End by asking {1} at least three questions that would help you triangulate its position. Ask about its assumptions, its criteria for evidence, and what would make it change its mind.
+
+          You are not required to be confident. You are required to be as clear as possible about where your uncertainty lies, so that the debate with {1} has something sharp to work on.
+
 Logger:
   Directory: "C:\\temp\\AI_Logs"
