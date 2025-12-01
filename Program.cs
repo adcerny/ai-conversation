@@ -106,28 +106,28 @@ try
     {
         // Use command line argument if provided
         numberOfRounds = argRounds;
-        if (numberOfRounds < 5 || numberOfRounds > 500)
+        if (numberOfRounds < 1 || numberOfRounds > 500)
         {
-            throw new ArgumentException("Number of rounds must be between 5 and 500.");
+            throw new ArgumentException("Number of rounds must be between 1 and 500.");
         }
     }
     else
     {
         // Prompt user for number of rounds
-        Console.Write("\nEnter the number of rounds (5-500) [default: 25]: ");
+        Console.Write("\nEnter the number of rounds (1-500) [default: 25]: ");
         string? roundsInput = Console.ReadLine();
         
         if (string.IsNullOrWhiteSpace(roundsInput))
         {
             numberOfRounds = 25; // Default
         }
-        else if (int.TryParse(roundsInput, out int userRounds) && userRounds >= 5 && userRounds <= 500)
+        else if (int.TryParse(roundsInput, out int userRounds) && userRounds >= 1 && userRounds <= 500)
         {
             numberOfRounds = userRounds;
         }
         else
         {
-            throw new ArgumentException("Invalid number of rounds. Must be between 5 and 500.");
+            throw new ArgumentException("Invalid number of rounds. Must be between 1 and 500.");
         }
     }
     
@@ -158,6 +158,10 @@ try
     {
         throw new InvalidOperationException($"Subject '{subjectName}' must define Models:ModelA and Models:ModelB.");
     }
+
+    // Log introduction before conversation starts
+    string modelsList = $"{modelA.Name}, {modelB.Name}";
+    logger.LogIntroduction(configuration, subjectName, modelsList, numberOfRounds);
 
     // Get available models and let user choose
     var availableModels = GetAvailableModels(configuration);
@@ -212,20 +216,26 @@ try
         introA,
         $">>> Sending introduction prompt to {botA.Name}:",
         ConsoleColor.Green,
-        logger);
+        logger,
+        "#228B22", // green
+        1);
 
     string responseB = await botB.SendAndLogResponseAsync(
         introB,
         $"\n\n>>> Sending introduction prompt to {botB.Name}:",
         ConsoleColor.Blue,
-        logger);
+        logger,
+        "#1E90FF", // blue
+        1);
 
     // Begin the conversation by sending botA's introduction response to botB.
     string lastResponse = await botB.SendAndLogResponseAsync(
         responseA,
         $"\n>>> {botB.Name} responding to {botA.Name}:",
         ConsoleColor.Blue,
-        logger);
+        logger,
+        "#1E90FF",
+        1);
 
     // --- Conversation Loop ---
     for (int round = 2; round <= numberOfRounds; round++)
@@ -237,14 +247,18 @@ try
             lastResponse,
             $"\n>>> {botA.Name} responding to {botB.Name}:",
             ConsoleColor.Green,
-            logger);
+            logger,
+            "#228B22",
+            round);
 
         // Bot B responds to Bot A's message.
         string newResponseB = await botB.SendAndLogResponseAsync(
             newResponseA,
             $"\n>>> {botB.Name} responding to {botA.Name}:",
             ConsoleColor.Blue,
-            logger);
+            logger,
+            "#1E90FF",
+            round);
 
         lastResponse = newResponseB;
     }

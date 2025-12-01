@@ -48,23 +48,43 @@ public class ConversationLogger
     }
 
     /// <summary>
-    /// Logs a chatbot's response as a Markdown entry.
-    /// The response is output with the model name in bold and with an inline HTML span to color the text.
-    /// Newline characters are preserved.
+    /// Logs the introduction section at the start of the conversation log, using the template from configuration.
+    /// </summary>
+    /// <param name="configuration">App configuration containing the template.</param>
+    /// <param name="subject">Conversation subject.</param>
+    /// <param name="models">Comma-separated list of models.</param>
+    /// <param name="rounds">Number of rounds.</param>
+    public void LogIntroduction(IConfiguration configuration, string subject, string models, int rounds)
+    {
+        string template = configuration["IntroductionTemplate"] ?? "";
+        if (string.IsNullOrWhiteSpace(template)) return;
+
+        // Replace placeholders
+        template = template.Replace("{subject}", subject)
+                           .Replace("{models}", models)
+                           .Replace("{rounds}", rounds.ToString());
+
+        Logger.Info(template + "\n");
+    }
+
+
+    /// <summary>
+    /// Logs a chatbot's response as a Markdown entry, with improved formatting for readability.
     /// </summary>
     /// <param name="modelName">The name of the model sending the response.</param>
     /// <param name="response">The text of the response.</param>
     /// <param name="color">The HTML color to use for the text.</param>
-    public void LogResponse(string modelName, string response, string color)
+    /// <param name="round">Optional round number for section header.</param>
+    public void LogResponse(string modelName, string response, string color, int? round = null)
     {
-        // Replace newline characters with Markdown line breaks (two spaces then newline)
-        // Alternatively, you can leave the raw newlines if your Markdown viewer preserves them.
-        string mdResponse = Regex.Replace(response, @"(\r\n|\n|\r)", "  \n");
+        // Replace newline characters with Markdown line breaks for blockquote formatting
+        string mdResponse = Regex.Replace(response, @"(\r\n|\n|\r)", "\n>");
 
         // Build the Markdown log entry.
-        // We use a bold header, and then an inline HTML span for the colored text.
-        string logEntry = $"**Response from {modelName}:**\n\n" +
-                          $"<span style=\"color:{color};\">{mdResponse}</span>\n\n";
+        string roundHeader = round.HasValue ? $"## Round {round.Value}\n\n" : "";
+        string logEntry = roundHeader +
+            $"**Model:** <span style=\"color:{color}; font-weight:bold;\">{modelName}</span>\n\n" +
+            $"> {mdResponse}\n\n";
         Logger.Info(logEntry);
     }
 }

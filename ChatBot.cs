@@ -33,7 +33,9 @@ public class ChatBot
         string prompt,
         string header,
         ConsoleColor consoleColor,
-        ConversationLogger logger)
+        ConversationLogger logger,
+        string? modelColor = null,
+        int? round = null)
     {
         Console.WriteLine(header);
         Console.ForegroundColor = consoleColor;
@@ -46,6 +48,10 @@ public class ChatBot
         }
 
         Console.ResetColor();
+
+        // Log the response to markdown file with improved formatting
+        logger.LogResponse(Name, response, modelColor ?? "#333", round);
+
         return response;
     }
 }

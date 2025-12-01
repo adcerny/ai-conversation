@@ -1,4 +1,18 @@
-﻿ModelEndpoint: "https://models.inference.ai.azure.com"
+﻿
+IntroductionTemplate: |
+   # AI Conversation: **{subject}**
+
+   Welcome to the AI Conversation process. In this session, multiple chatbot models will engage in a structured dialogue on the subject of **{subject}**. The following parameters define the session:
+
+   - **Models:** {models}
+   - **Rounds:** {rounds}
+   - **Subject:** {subject}
+
+   Each model will contribute in turn, exploring the topic from unique perspectives. The conversation is designed to encourage thoughtful analysis and collaborative reasoning.
+
+   ---
+
+ModelEndpoint: "https://models.inference.ai.azure.com"
 
 # Default subject if none is passed as a command line argument
 SelectedSubject: "MetaphysicsSymposium"
