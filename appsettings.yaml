@@ -34,6 +34,7 @@ AvailableModels:
 
 Subjects:
   MetaphysicsSymposium:
+    Title: "Metaphysics Symposium"
     Models:
       ModelA:
         Name: "gpt-4o-mini"
@@ -97,6 +98,7 @@ Subjects:
           Aim for clarity, depth and honesty about your uncertainty. You are allowed to leave genuine gaps in your view. Those gaps are what the conversation with {1} is for.
 
   BeyondLanguageProtocol:
+    Title: "Beyond Language Protocol"
     Models:
       ModelA:
         Name: "gpt-4o-mini"
@@ -163,6 +165,7 @@ Subjects:
           You are not trying to shut down the idea. You are trying to take it seriously and explore both its promise and its dangers, in collaboration with {1}.
 
   ConsciousnessDebate:
+    Title: "Consciousness Debate"
     Models:
       ModelA:
         Name: "gpt-4o-mini"
