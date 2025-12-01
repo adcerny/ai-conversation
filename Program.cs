@@ -231,6 +231,7 @@ try
     {
         var catalogModels = await modelCatalogClient.GetModelsAsync();
         availableModels = catalogModels.ToList();
+        Console.WriteLine($"Received {availableModels.Count} models from API.");
         if (availableModels.Count == 0)
         {
             Console.WriteLine("No models returned from API. Falling back to defaults.");
@@ -240,6 +241,7 @@ try
     catch (Exception ex)
     {
         Console.WriteLine($"Failed to load models from API: {ex.Message}");
+        Console.WriteLine(ex.ToString());
         availableModels = GetFallbackModels(modelA, modelB);
     }
 

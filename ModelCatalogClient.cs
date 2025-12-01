@@ -2,6 +2,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System;
 
 internal class ModelCatalogClient
 {
@@ -18,12 +19,18 @@ internal class ModelCatalogClient
 
     public async Task<IReadOnlyList<ModelMetadata>> GetModelsAsync()
     {
+        Console.WriteLine("Fetching models from GitHub Models API...");
         using var response = await _httpClient.GetAsync("https://api.github.com/models");
+        Console.WriteLine($"Model API response: {(int)response.StatusCode} {response.ReasonPhrase}");
+
+        var content = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"Model API content length: {content?.Length ?? 0} characters");
         response.EnsureSuccessStatusCode();
 
-        using var stream = await response.Content.ReadAsStreamAsync();
-        using var document = await JsonDocument.ParseAsync(stream);
-        return ParseModels(document.RootElement).ToList();
+        using var document = JsonDocument.Parse(content);
+        var models = ParseModels(document.RootElement).ToList();
+        Console.WriteLine($"Parsed {models.Count} models from API response.");
+        return models;
     }
 
     private static IEnumerable<ModelMetadata> ParseModels(JsonElement root)
