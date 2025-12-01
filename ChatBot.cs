@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.AI;
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.Extensions.AI;
 
 /// <summary>
 /// Represents a chatbot with configuration and response handling.
