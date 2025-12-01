@@ -29,7 +29,7 @@ internal class ModelCatalogClient
         using var response = await _httpClient.GetAsync(requestUri);
         Diagnostics.Info("Model API response status: {status} ({reason})", (int)response.StatusCode, response.ReasonPhrase);
 
-        var content = await response.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync() ?? string.Empty;
         Diagnostics.Info("Model API content length: {length} characters", content?.Length ?? 0);
         response.EnsureSuccessStatusCode();
 

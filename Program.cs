@@ -176,8 +176,6 @@ try
                    throw new InvalidOperationException("Make sure to add GITHUB_TOKEN value to the user secrets or environment variables.");
     diagnostics.Info("Retrieved GitHub token from configuration/environment (length: {length}).", token.Length);
 
-    var logger = new ConversationLogger();
-
     // Load the selected subject configuration
     var subjectSection = configuration.GetSection($"Subjects:{subjectName}");
     if (!subjectSection.Exists())
