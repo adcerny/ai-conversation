@@ -34,6 +34,8 @@ AvailableModels:
 Subjects:
   RelativityParadoxDebate:
     Title: "Relativity and the Speed of Light Paradox"
+    ReminderPrompt: "Keep examining whether light speed is a limit and how relativity handles superluminal ideas."
+    ReminderInterval: 5
     Models:
       ModelA:
         InitialPrompt: |
@@ -126,6 +128,8 @@ Subjects:
 
   MetaphysicsSymposium:
     Title: "Metaphysics Symposium"
+    ReminderPrompt: "Stay focused on meaning in a timeless universe and challenge each other's metaphysical assumptions."
+    ReminderInterval: 5
     Models:
       ModelA:
         InitialPrompt: |
@@ -188,6 +192,8 @@ Subjects:
 
   BeyondLanguageProtocol:
     Title: "Beyond Language Protocol"
+    ReminderPrompt: "Concentrate on building an AI-to-AI communication protocol that improves on human language."
+    ReminderInterval: 5
     Models:
       ModelA:
         Name: "gpt-4o-mini"
