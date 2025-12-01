@@ -24,26 +24,20 @@ static string SelectModel(List<string> availableModels, string botName, string? 
     Console.WriteLine($"\nAvailable models for {botName}:");
     for (int i = 0; i < availableModels.Count; i++)
     {
-        string marker = (defaultModel != null && availableModels[i] == defaultModel) ? " (default)" : "";
-        Console.WriteLine($"  {i + 1}. {availableModels[i]}{marker}");
+        Console.WriteLine($"  {i + 1}. {availableModels[i]}");
     }
 
-    Console.Write($"\nEnter the number of the model for {botName}" + 
-                  (defaultModel != null ? $" [default: {defaultModel}]: " : ": "));
+    Console.Write($"\nEnter the number of the model for {botName}: ");
     string? input = Console.ReadLine();
 
-    if (string.IsNullOrWhiteSpace(input) && defaultModel != null)
+    while (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out int choice) || choice < 1 || choice > availableModels.Count)
     {
-        return defaultModel;
+        Console.WriteLine("Invalid selection. Please enter a valid number.");
+        Console.Write($"Enter the number of the model for {botName}: ");
+        input = Console.ReadLine();
     }
 
-    if (int.TryParse(input, out int choice) && choice >= 1 && choice <= availableModels.Count)
-    {
-        return availableModels[choice - 1];
-    }
-
-    Console.WriteLine($"Invalid selection. Using default: {defaultModel ?? availableModels[0]}");
-    return defaultModel ?? availableModels[0];
+    return availableModels[int.Parse(input) - 1];
 }
 
 try

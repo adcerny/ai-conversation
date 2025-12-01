@@ -77,14 +77,14 @@ public class ConversationLogger
     /// <param name="round">Optional round number for section header.</param>
     public void LogResponse(string modelName, string response, string color, int? round = null)
     {
-        // Replace newline characters with Markdown line breaks for blockquote formatting
-        string mdResponse = Regex.Replace(response, @"(\r\n|\n|\r)", "\n>");
+        // Output plain markdown for the response
+        string mdResponse = response.Replace("\r","");
 
         // Build the Markdown log entry.
         string roundHeader = round.HasValue ? $"## Round {round.Value}\n\n" : "";
         string logEntry = roundHeader +
             $"**Model:** <span style=\"color:{color}; font-weight:bold;\">{modelName}</span>\n\n" +
-            $"> {mdResponse}\n\n";
+            $"{mdResponse}\n\n";
         Logger.Info(logEntry);
     }
 }
